@@ -46,11 +46,16 @@ if ($existing) {
 Start-ScheduledTask -TaskName $taskName
 
 $deadline = (Get-Date).AddSeconds(40)
+$gatewayReady = $false
 do {
     Start-Sleep -Milliseconds 500
     try { $health = Invoke-RestMethod -Uri 'http://127.0.0.1:4520/api/health' -TimeoutSec 2 } catch { $health = $null }
-} until ($health.status -eq 'ready' -or (Get-Date) -gt $deadline)
-if ($health.status -ne 'ready') {
+    if ($null -ne $health -and $health.status -eq 'ready') {
+        $gatewayReady = $true
+        break
+    }
+} while ((Get-Date) -le $deadline)
+if (-not $gatewayReady) {
     Get-Content -LiteralPath (Join-Path $gatewayRoot 'gateway.stderr.log') -Tail 60 -ErrorAction SilentlyContinue
     throw 'Hearth Gateway did not become ready.'
 }
