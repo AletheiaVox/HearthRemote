@@ -67,12 +67,12 @@ export function SetupWizard({ api, settings, onSave }: {
         <div className="setup-heading">
           <span className="eyebrow">Welcome home</span>
           <h1>Connect this computer to your AI host.</h1>
-          <p>Your host is the Windows computer where Codex and your projects live. This computer becomes a private window into it.</p>
+          <p>Your host is the Windows computer where Codex and your projects live. This computer becomes a private window into it—even while the Codex desktop app there is closed.</p>
         </div>
 
         <div className="setup-explainer">
           <Network size={21} />
-          <div><strong>First, put both computers on the same tailnet.</strong><p>A tailnet is a private network made by Tailscale. It lets your own devices find each other without exposing Codex to the public internet.</p></div>
+          <div><strong>First, put both computers on the same tailnet.</strong><p>A tailnet is a private network made by Tailscale. It lets your own devices find the hidden Hearth Remote host service without exposing Codex to the public internet.</p></div>
         </div>
 
         <div className={`setup-status ${status?.tailscale.connected ? "is-ready" : ""}`}>

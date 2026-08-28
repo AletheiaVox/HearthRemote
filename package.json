@@ -25,6 +25,7 @@
     "smoke": "npm run ensure:electron && npm run build && powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged.ps1",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
+    "test:migration": "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/test-legacy-migration.ps1",
     "dist:win": "npm run ensure:electron && npm run build && electron-builder --win nsis portable",
     "dist:portable": "npm run ensure:electron && npm run build && electron-builder --win portable"
   },

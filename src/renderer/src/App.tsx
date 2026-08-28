@@ -324,7 +324,7 @@ export function App(): React.JSX.Element {
             <div className="welcome-mark"><span /></div>
             <span className="eyebrow">Securely connected to your desktop</span>
             <h2>{snapshot.provider === "hermes" ? `Your local resident lives on ${snapshot.settings.hostName}.` : `Your Codex tasks live on ${snapshot.settings.hostName}.`}<br />This is simply another window into them.</h2>
-            <p>{snapshot.provider === "hermes" ? "Select a conversation, or begin a new one in any project folder." : "Select a task from the sidebar, or start a new one after switching control to this device."}</p>
+            <p>{snapshot.provider === "hermes" ? "Select a conversation, or begin a new one in any project folder." : "The hidden host service stays available even while the Codex desktop app is closed. Select a task, or start a new one after switching control to this device."}</p>
             <button className="button tone-primary" type="button" disabled={snapshot.connection !== "ready"} onClick={newSession}>Start a new task</button>
           </section>
         )}

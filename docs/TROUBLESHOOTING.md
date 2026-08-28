@@ -2,6 +2,8 @@
 
 Start with `scripts\Hearth Remote Doctor.cmd`. It is read-only and does not reveal the capability token.
 
+The host must be awake and signed into Windows, but the Codex desktop app does not need to be running. If it is open, it may retain writer ownership until you use the handoff control.
+
 ## Codex tools fail after a desktop update
 
 Typical message: the local command runner reports a missing-host executable or the expected helper is absent from its installed path.

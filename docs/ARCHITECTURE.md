@@ -28,6 +28,8 @@ All host backends bind to loopback. Tailscale Serve terminates tailnet TLS and f
 
 Codex rejects a second active writer. Hearth Remote inspects host ownership, requests a normal desktop close, offers a separately confirmed targeted force-close if necessary, resumes only the selected task, unsubscribes loaded tasks when returning control, and recycles only the dedicated listener when needed to clear stale writer state.
 
+The dedicated listener is headless and starts at Windows logon. Remote access requires the host to be awake and the user session to be logged in; it does not require the Codex desktop app to be open. Closing that app is normally preferable because it releases foreground ownership to Hearth Remote.
+
 The listener supervisor discovers the newest complete installed runtime pair on every health cycle. This is the compatibility seam for Codex desktop updates.
 
 ## Phone gateway

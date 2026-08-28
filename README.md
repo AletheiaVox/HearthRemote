@@ -1,6 +1,6 @@
 # Hearth Remote
 
-A calm, private Windows and phone client for Codex tasks that live on another Windows computer.
+A calm, private Windows and phone client for Codex tasks that live on another Windows computer—even when the Codex desktop app is closed.
 
 > **Public alpha:** Hearth Remote works in daily use, but it integrates with Codex app-server interfaces that may change when Codex updates. The listener includes update recovery and the repository includes a read-only Doctor, but expect occasional compatibility fixes until those interfaces stabilize.
 
@@ -16,10 +16,17 @@ Hearth Remote lets one Windows computer remain the canonical home for Codex, its
 - Start a task in a chosen project folder.
 - Attach files and images to prompts.
 - Transfer task ownership safely between the host Codex app and Hearth Remote.
+- Keep remote access available through a hidden supervised listener; the Codex desktop app does not need to be running.
 - Use an installable phone PWA with one-time pairing and revocable device sessions.
 - Optionally expose Hermes profiles, conversations, and model selection through the same interface.
 
 Hermes support is an optional adapter for an already configured compatible Hermes bridge on host loopback port 4510. Hearth Remote does not install or configure Hermes itself.
+
+## Leave home without remembering to open Codex
+
+The host computer must be awake and signed into Windows, but the Codex desktop app does **not** need to be open. Hearth Remote starts a dedicated headless Codex service at Windows logon, keeps it healthy after crashes and app updates, and exposes it only through the private tailnet.
+
+In fact, the desktop app should normally be closed during a remote Codex session because Codex permits only one active writer. This makes Hearth Remote useful after you have already left home: remote availability does not depend on remembering to leave a foreground Codex window running.
 
 ```text
 Windows client ─┐                         ┌─ Codex app-server (loopback only)
@@ -61,6 +68,8 @@ Then double-click **`scripts\Setup Hearth Remote Host.cmd`**. The default projec
 ```
 
 Setup creates `Hearth-Remote-Connection.json` on the host desktop. If Tailscale opens a browser asking you to enable HTTPS certificates, approve it and run setup once more.
+
+Existing pre-alpha installations are adopted in place: setup preserves the capability token and paired phones, exports the old scheduled tasks for rollback, and disables the superseded listener only after the new runtime folder is ready. Use `-Plan` to inspect the migration without changing anything.
 
 The connection file contains a private capability token. Move it to the client, import it, and then delete it from both computers. Hearth Remote encrypts the imported token with Windows protection.
 

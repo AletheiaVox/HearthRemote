@@ -10,3 +10,5 @@
 - Added optional Hermes configuration, profiles, conversations, and model selection.
 - Added project selection and prompt attachments.
 - Added mobile reading-size controls and transcript scroll preservation.
+- Added rollback-safe adoption of legacy Hearth Remote tokens, paired phones, and Windows tasks.
+- Documented headless host availability as a core remote-access feature.

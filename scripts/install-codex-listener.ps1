@@ -105,10 +105,11 @@ if (-not $SkipRestart) {
         catch {
             $status = $null
         }
-        if ($status -eq 200) { break }
+        $taskState = (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue).State
+        if ($status -eq 200 -and $taskState -eq 'Running') { break }
         Start-Sleep -Milliseconds 500
     } while ([DateTimeOffset]::Now -lt $deadline)
-    if ($status -ne 200) { throw 'The Codex remote listener did not become ready within 30 seconds.' }
+    if ($status -ne 200 -or $taskState -ne 'Running') { throw 'The Codex remote listener or its supervisor did not become ready within 30 seconds.' }
 }
 
 Write-Host 'Codex listener supervision is installed.' -ForegroundColor Green
