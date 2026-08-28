@@ -4,10 +4,11 @@ import { homedir } from "node:os";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
-import type { AppSnapshot, ApprovalOption, HandoffMode, PromptAttachment, ProviderId } from "../shared/contracts";
+import type { AppSnapshot, ApprovalOption, PromptAttachment, ProviderId } from "../shared/contracts";
 import { ProviderService } from "../main/provider-service";
 import { GatewayAuthStore } from "./auth-store";
 import { GatewayConfig } from "./config";
+import { handoffModeArg, isAllowedBrowserOrigin } from "./request-validation";
 
 const host = "127.0.0.1";
 const port = Number(process.env.HEARTH_GATEWAY_PORT || 4520);
@@ -99,7 +100,7 @@ async function handleHttp(request: IncomingMessage, response: ServerResponse): P
   }
 
   if (url.pathname === "/api/health" && request.method === "GET") {
-    json(response, 200, { status: "ready", host: hostName });
+    json(response, 200, { status: "ready" });
     return;
   }
 
@@ -167,7 +168,7 @@ async function invoke(method: string, params: unknown): Promise<unknown> {
     case "interrupt": return service.interrupt();
     case "resolveApproval": return service.resolveApproval(idArg(args[0]), requiredString(args[1], "approval option") as ApprovalOption["id"]);
     case "answerQuestion": return service.answerQuestion(idArg(args[0]), answersArg(args[1]));
-    case "runHandoff": return service.runHandoff(requiredString(args[0], "handoff mode") as HandoffMode);
+    case "runHandoff": return service.runHandoff(handoffModeArg(args[0]));
     case "selectProvider": return service.selectProvider(requiredString(args[0], "provider") as ProviderId);
     case "selectModel": return service.selectModel(requiredString(args[0], "model provider"), requiredString(args[1], "model"));
     case "saveSettings": throw new Error(`Connection settings are managed on ${hostName}.`);
@@ -200,18 +201,7 @@ async function authenticateRequest(request: IncomingMessage) {
 }
 
 function validOrigin(request: IncomingMessage): boolean {
-  const origin = request.headers.origin;
-  if (!origin) return false;
-  if (publicOrigin && origin === publicOrigin) return true;
-  try {
-    const originHost = new URL(origin).host.toLowerCase();
-    const candidates = [request.headers.host, headerValue(request.headers["x-forwarded-host"])]
-      .filter((value): value is string => Boolean(value))
-      .map((value) => value.toLowerCase());
-    return candidates.includes(originHost);
-  } catch {
-    return false;
-  }
+  return isAllowedBrowserOrigin(request.headers.origin, publicOrigin, port);
 }
 
 function allowPairAttempt(key: string): boolean {
@@ -226,9 +216,9 @@ function allowPairAttempt(key: string): boolean {
 }
 
 function clientAddress(request: IncomingMessage): string {
-  return headerValue(request.headers["x-forwarded-for"])?.split(",")[0]?.trim()
-    || request.socket.remoteAddress
-    || "unknown";
+  // The gateway binds to loopback, so the OS-level peer is the only address we
+  // trust for throttling. Forwarded headers are client-controlled at this seam.
+  return request.socket.remoteAddress || "unknown";
 }
 
 function cookieValue(request: IncomingMessage, name: string): string | undefined {

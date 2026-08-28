@@ -60,6 +60,18 @@ function Write-JsonFile([string]$Path, $Value) {
     Move-Item -LiteralPath $temporary -Destination $Path -Force
 }
 
+function Get-Sha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try {
+        return [BitConverter]::ToString($algorithm.ComputeHash($stream)).Replace('-', '')
+    }
+    finally {
+        $algorithm.Dispose()
+        $stream.Dispose()
+    }
+}
+
 function Export-TaskIfPresent([string]$TaskName, [string]$Destination) {
     $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     if (-not $task) { return $false }
@@ -129,7 +141,7 @@ if ($Mode -eq 'Prepare') {
         legacyListenerXml = if ($legacyListenerExported) { $legacyListenerXml } else { '' }
         gatewayXml = if ($gatewayExported) { $gatewayXml } else { '' }
         legacyListenerWasEnabled = $plan.legacyListenerTaskEnabled
-        legacyTokenSha256 = (Get-FileHash -LiteralPath $legacyTokenPath -Algorithm SHA256).Hash
+        legacyTokenSha256 = Get-Sha256 $legacyTokenPath
         pairedDevicesCopied = Test-Path -LiteralPath $modernDevicesPath -PathType Leaf
     }
     Write-JsonFile $statePath $state

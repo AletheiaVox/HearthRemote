@@ -130,7 +130,7 @@ npm run build:phone
 - The capability token lives in an ACL-restricted host folder.
 - The Windows client stores it with Electron `safeStorage` (Windows DPAPI).
 - Phones use expiring pairing codes and separate revocable device sessions.
-- Attachments are size-limited and written inside the selected host project.
+- Attachments are size-limited and written under `.codex-remote-attachments` inside the selected host project so resumed tasks can still read them. Add that folder to the project's `.gitignore`; Hearth Remote does not delete task evidence automatically.
 - The renderer is sandboxed and receives only a narrow preload API.
 
 Read [SECURITY.md](SECURITY.md) before deploying or reporting a vulnerability.

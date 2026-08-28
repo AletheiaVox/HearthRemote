@@ -27,7 +27,7 @@ The update supervisor selects only a `codex.exe` with a `codex-code-mode-host.ex
 
 ## Web protections
 
-The phone gateway validates Origin, uses SameSite and Secure cookies, rate-limits pairing, sets a restrictive Content Security Policy, and caps JSON and WebSocket payload sizes. Static file resolution is constrained to the built web root.
+The phone gateway pins browser Origin to its configured public address, uses SameSite and Secure cookies, rate-limits pairing without trusting forwarded client headers, sets a restrictive Content Security Policy, and caps JSON and WebSocket payload sizes. Static file resolution is constrained to the built web root.
 
 ## Reporting a vulnerability
 

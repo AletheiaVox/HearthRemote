@@ -63,3 +63,4 @@ The desktop client stores non-secret settings and a DPAPI-encrypted token in Ele
 - The renderer has no Node integration and runs sandboxed.
 - Browser RPC methods are enumerated; browsers cannot change host connection settings.
 - Attachments have count, individual-size, and total-size limits before host writes.
+- Codex attachments remain in the selected project's `.codex-remote-attachments` folder for task continuity. Projects should ignore that folder in version control; automatic cleanup would risk breaking resumed tasks.

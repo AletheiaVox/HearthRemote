@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { codexTestHelpers } from "./codex-adapter";
 
 describe("host handoff output", () => {
+  it("never maps an unknown handoff mode to Force", () => {
+    expect(codexTestHelpers.handoffPowerShellMode("status")).toBe("Status");
+    expect(codexTestHelpers.handoffPowerShellMode("prepare")).toBe("Prepare");
+    expect(codexTestHelpers.handoffPowerShellMode("force")).toBe("Force");
+    expect(() => codexTestHelpers.handoffPowerShellMode("surprise" as never)).toThrow(/unsupported handoff mode/i);
+  });
+
   it("reads the final JSON state after human-readable PowerShell output", () => {
     const state = codexTestHelpers.parseHandoffState([
       "Checking the host safely; nothing has been closed yet.",

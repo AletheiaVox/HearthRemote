@@ -89,7 +89,7 @@ export class CodexAdapter implements AssistantAdapter {
           id: "codex",
           name: "Codex",
           subtitle: `Remote on ${this.hostName}`,
-          available: this.config.publicSettings().hermesEnabled,
+          available: true,
           capabilities: {
             conversations: true,
             newConversation: true,
@@ -105,7 +105,7 @@ export class CodexAdapter implements AssistantAdapter {
           id: "hermes",
           name: "Local AI",
           subtitle: "Hermes resident",
-          available: true,
+          available: this.config.publicSettings().hermesEnabled,
           capabilities: {
             conversations: true,
             newConversation: true,
@@ -430,7 +430,7 @@ export class CodexAdapter implements AssistantAdapter {
 
   async runHandoff(mode: HandoffMode): Promise<HandoffResult> {
     this.requireConnection();
-    const psMode = mode === "status" ? "Status" : mode === "prepare" ? "Prepare" : "Force";
+    const psMode = handoffPowerShellMode(mode);
     const result = await this.rpc.request<CommandExecResponse>(
       "command/exec",
       {
@@ -774,6 +774,15 @@ function parseHandoffState(stdout: string): HostHandoffState {
   throw new Error("The host returned an unreadable handoff status.");
 }
 
+function handoffPowerShellMode(mode: HandoffMode): "Status" | "Prepare" | "Force" {
+  switch (mode) {
+    case "status": return "Status";
+    case "prepare": return "Prepare";
+    case "force": return "Force";
+    default: throw new Error(`Unsupported handoff mode: ${String(mode)}`);
+  }
+}
+
 function asRecord(value: unknown): Record<string, any> {
   return value && typeof value === "object" ? value as Record<string, any> : {};
 }
@@ -806,4 +815,4 @@ function friendlyConnectionError(error: unknown, hostName: string): string {
   return message;
 }
 
-export const codexTestHelpers = { parseHandoffState };
+export const codexTestHelpers = { handoffPowerShellMode, parseHandoffState };
