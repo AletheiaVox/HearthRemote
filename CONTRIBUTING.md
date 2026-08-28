@@ -22,3 +22,5 @@ Please preserve these invariants:
 - no user-specific names, paths, tailnet domains, or session data enters fixtures or documentation.
 
 Security reports containing sensitive details should not be filed publicly. See [SECURITY.md](SECURITY.md).
+
+To inspect the first-run wizard without changing a working Hearth Remote profile, build the portable app and double-click `scripts\Preview First Run.cmd`. It uses a disposable Electron user-data directory and removes it when the preview closes.
