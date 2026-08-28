@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a reproducible Hearth Remote problem without private data
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Never attach connection files, tokens, private tailnet names, usernames, or unredacted session logs."
+  - type: input
+    id: version
+    attributes:
+      label: Hearth Remote version
+      placeholder: 0.3.0-alpha.1
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: Affected client
+      options: [Windows client, Phone PWA, Both]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include what you expected and what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Exact error text
+      render: text
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Redacted Doctor output
+      description: Doctor hides tokens, but review all output before posting.
+      render: text

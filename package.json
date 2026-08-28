@@ -1,0 +1,59 @@
+{
+  "name": "hearth-remote",
+  "version": "0.3.0-alpha.1",
+  "private": true,
+  "description": "A calm, secure Windows and phone client for Codex on another Windows host.",
+  "author": "Tina and Codex",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "generate:icon": "node scripts/generate-icon.mjs",
+    "ensure:electron": "node scripts/ensure-electron-runtime.mjs",
+    "prebuild": "npm run generate:icon",
+    "dev": "electron-vite dev",
+    "dev:web": "vite --config vite.web.config.ts",
+    "dev:pwa": "vite --config vite.pwa.config.ts",
+    "build": "electron-vite build",
+    "build:pwa": "npm run generate:icon && vite build --config vite.pwa.config.ts",
+    "build:gateway": "vite build --config vite.gateway-server.config.ts",
+    "build:phone": "npm run build:pwa && npm run build:gateway",
+    "start:gateway": "node out/gateway/server.js",
+    "smoke": "npm run ensure:electron && npm run build && powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged.ps1",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "dist:win": "npm run ensure:electron && npm run build && electron-builder --win nsis portable",
+    "dist:portable": "npm run ensure:electron && npm run build && electron-builder --win portable"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "ws": "^8.18.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.4.1",
+    "electron": "^43.4.1",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^3.1.0",
+    "sharp": "^0.35.3",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  },
+  "allowScripts": {
+    "electron": true,
+    "electron-winstaller": true,
+    "esbuild": true,
+    "sharp": true
+  }
+}
