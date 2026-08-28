@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$ProjectRoot = '',
     [string]$NodePath = '',
     [string]$HostRoot = (Join-Path $env:USERPROFILE '.hearth-remote\host'),
     [string]$PublicOrigin = '',
@@ -10,6 +10,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$scriptPath = $MyInvocation.MyCommand.Path
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    if ([string]::IsNullOrWhiteSpace($scriptPath)) { throw 'PowerShell could not determine the gateway script location.' }
+    $ProjectRoot = Join-Path (Split-Path -Parent $scriptPath) '..'
+}
+$ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
 $listenerRoot = [IO.Path]::GetFullPath($HostRoot)
 $gatewayRoot = Join-Path $listenerRoot 'hearth-gateway'
 $tokenPath = Join-Path $listenerRoot 'app-server-token'
