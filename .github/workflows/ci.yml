@@ -19,6 +19,7 @@ jobs:
       - run: npm run test:migration
       - run: npm run build
       - run: npm run build:phone
+      - run: npm run build:hermes-bridge
       - run: npm run smoke
       - name: Parse PowerShell scripts
         shell: powershell

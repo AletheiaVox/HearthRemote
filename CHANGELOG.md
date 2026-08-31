@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-alpha.3
+
+- Added an authenticated loopback compatibility bridge for current Hermes host validation.
+- Moved the raw Hermes backend to private port 4511 while preserving client and tailnet port 4510.
+- Added Hermes process supervision, automatic restart, rollback-safe task replacement, and Doctor coverage.
+- Preserved existing profiles, models, client settings, and phone sessions without patching Hermes.
+
 ## 0.3.0-alpha.1
 
 - Generalized host names, Windows paths, and tailnet endpoints.

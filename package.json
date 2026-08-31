@@ -1,6 +1,6 @@
 {
   "name": "hearth-remote",
-  "version": "0.3.0-alpha.2",
+  "version": "0.3.0-alpha.3",
   "private": true,
   "description": "A calm, secure Windows and phone client for Codex on another Windows host.",
   "author": "Tina and Codex",
@@ -20,6 +20,7 @@
     "build": "electron-vite build",
     "build:pwa": "npm run generate:icon && vite build --config vite.pwa.config.ts",
     "build:gateway": "vite build --config vite.gateway-server.config.ts",
+    "build:hermes-bridge": "vite build --config vite.hermes-bridge.config.ts",
     "build:phone": "npm run build:pwa && npm run build:gateway",
     "start:gateway": "node out/gateway/server.js",
     "smoke": "npm run ensure:electron && npm run build && powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged.ps1",

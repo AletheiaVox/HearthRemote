@@ -43,6 +43,16 @@ This is expected the first time Tailscale Serve uses HTTPS in a tailnet. Approve
 - Run `tailscale serve status` on the host and confirm HTTPS port 4520 forwards to `127.0.0.1:4520`.
 - Create a fresh pairing code; codes are single-use and expire.
 
+## Local AI reports 502 or ECONNREFUSED on port 4510
+
+These two messages usually describe the same host-side failure: the Hermes service is absent, or a newer Hermes build rejects the tailnet hostname before Hearth Remote can connect.
+
+1. Run Doctor and check **Hermes bridge**.
+2. Rerun host setup with `-EnableHermes`. This installs the supervised compatibility bridge on port 4510 and runs Hermes privately behind it on port 4511.
+3. Confirm Hermes Desktop is installed and has at least one working profile. It does not need to remain open.
+
+Do not set `HERMES_DASHBOARD_PUBLIC_URL`, weaken Hermes host validation, or expose port 4511 through Tailscale. The bridge is deliberately the only remote-facing Hermes boundary.
+
 ## Phone jumps to the bottom while reading
 
 Current builds preserve an upward-scrolled reading position during background refreshes. Clear the PWA cache or remove and reinstall the home-screen app if an older service worker remains active.

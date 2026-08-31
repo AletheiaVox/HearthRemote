@@ -20,7 +20,7 @@ Hearth Remote lets one Windows computer remain the canonical home for Codex, its
 - Use an installable phone PWA with one-time pairing and revocable device sessions.
 - Optionally expose Hermes profiles, conversations, and model selection through the same interface.
 
-Hermes support is an optional adapter for an already configured compatible Hermes bridge on host loopback port 4510. Hearth Remote does not install or configure Hermes itself.
+Hermes support is optional and expects Hermes Desktop to be installed and configured already. When enabled, host setup installs a supervised, authenticated loopback bridge on port 4510 and keeps the Hermes backend private on port 4511. Hearth Remote does not install Hermes or change its profiles and models.
 
 ## Leave home without remembering to open Codex
 
@@ -32,6 +32,7 @@ In fact, the desktop app should normally be closed during a remote Codex session
 Windows client ─┐                         ┌─ Codex app-server (loopback only)
                 ├─ encrypted tailnet ─── host Windows PC
 Phone PWA ──────┘                         ├─ Hearth phone gateway (loopback only)
+                                          ├─ Hermes bridge → Hermes (loopback only)
                                           └─ projects and canonical Codex state
 ```
 
@@ -105,7 +106,7 @@ Double-click **`scripts\Hearth Remote Doctor.cmd`**, or run:
 .\scripts\hearth-remote-doctor.ps1
 ```
 
-Doctor is read-only. It checks Tailscale, the complete version-matched Codex runtime, the token without revealing it, the listener, and the phone gateway. See [Troubleshooting](docs/TROUBLESHOOTING.md) for common failures and bug-report guidance.
+Doctor is read-only. It checks Tailscale, the complete version-matched Codex runtime, the token without revealing it, the listener, the phone gateway, and the Hermes bridge when installed. See [Troubleshooting](docs/TROUBLESHOOTING.md) for common failures and bug-report guidance.
 
 ## Development
 
@@ -126,6 +127,7 @@ npm run build:phone
 ## Security model
 
 - Host services listen only on `127.0.0.1`.
+- The optional Hermes bridge authenticates requests before rewriting only the network authority needed by Hermes's loopback host validation.
 - Tailscale Serve provides tailnet-only HTTPS/WSS access.
 - The capability token lives in an ACL-restricted host folder.
 - The Windows client stores it with Electron `safeStorage` (Windows DPAPI).

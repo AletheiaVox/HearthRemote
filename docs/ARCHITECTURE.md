@@ -7,8 +7,9 @@ Windows client (Electron)                    Windows host
 ┌────────────────────────┐                  ┌─────────────────────────────┐
 │ sandboxed React UI     │                  │ Codex app-server :4500     │
 │ narrow preload bridge  │── Tailscale ───▶ │ phone gateway :4520        │
-│ DPAPI-protected token  │                  │ optional Hermes :4510      │
-└────────────────────────┘                  │ canonical tasks + projects │
+│ DPAPI-protected token  │                  │ Hermes bridge :4510        │
+└────────────────────────┘                  │   └─ Hermes backend :4511   │
+                                            │ canonical tasks + projects │
                                             └─────────────────────────────┘
 
 Phone browser / installed PWA
@@ -19,6 +20,8 @@ Phone browser / installed PWA
 ```
 
 All host backends bind to loopback. Tailscale Serve terminates tailnet TLS and forwards only to `127.0.0.1`.
+
+When Hermes is enabled, Tailscale and the clients still use port 4510. A Hearth-managed compatibility bridge authenticates the existing capability token, rewrites the proxy-facing Host and Origin to loopback, and forwards to Hermes on port 4511. The same process supervises the Hermes child and restarts it after an exit. This preserves Hermes's loopback security mode without patching its version-sensitive installed source.
 
 ## Provider boundary
 
@@ -52,6 +55,9 @@ Runtime state stays outside the repository:
   hearth-gateway\
     devices.json
     pairing-code.json
+  hermes-bridge\
+    server.js
+    *.log
 ```
 
 The desktop client stores non-secret settings and a DPAPI-encrypted token in Electron's user-data directory. No `.codex` session database or project file is synchronized to clients.
@@ -62,5 +68,6 @@ The desktop client stores non-secret settings and a DPAPI-encrypted token in Ele
 - The main process allowlists external setup links.
 - The renderer has no Node integration and runs sandboxed.
 - Browser RPC methods are enumerated; browsers cannot change host connection settings.
+- The Hermes bridge permits only status without authentication; HTTP and WebSocket traffic otherwise requires the host capability token.
 - Attachments have count, individual-size, and total-size limits before host writes.
 - Codex attachments remain in the selected project's `.codex-remote-attachments` folder for task continuity. Projects should ignore that folder in version control; automatic cleanup would risk breaking resumed tasks.

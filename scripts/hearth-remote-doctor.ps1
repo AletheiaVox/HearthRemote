@@ -47,6 +47,17 @@ foreach ($service in @(
     } catch { Add-Check $service.Name $false $_.Exception.Message 'Run host setup again.' }
 }
 
+$hermesBridge = Join-Path $HostRoot 'hermes-bridge\server.js'
+if (Test-Path -LiteralPath $hermesBridge -PathType Leaf) {
+    try {
+        $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:4510/api/status' -TimeoutSec 3
+        $taskState = (Get-ScheduledTask -TaskName 'Hermes Remote Listener' -ErrorAction SilentlyContinue).State
+        $hermesOk = $response.StatusCode -eq 200 -and $taskState -eq 'Running'
+        Add-Check 'Hermes bridge' $hermesOk "HTTP $($response.StatusCode) on loopback; task $taskState" 'Run host setup again with -EnableHermes.'
+    }
+    catch { Add-Check 'Hermes bridge' $false $_.Exception.Message 'Run host setup again with -EnableHermes.' }
+}
+
 $report = [ordered]@{
     product = 'Hearth Remote'
     generatedAt = [DateTimeOffset]::Now.ToString('o')

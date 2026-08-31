@@ -64,12 +64,14 @@ try {
     $listenerArgs = @{ HostRoot = $HostRoot; WorkingDirectory = $DefaultCwd }
     & (Join-Path $PSScriptRoot 'install-codex-listener.ps1') @listenerArgs
 
-    Write-Step '3 of 5 - Publishing private tailnet addresses'
+    Write-Step '3 of 5 - Installing optional bridges and publishing private tailnet addresses'
     & $tailscale.Source serve --bg --https=4500 http://127.0.0.1:4500
     if ($LASTEXITCODE -ne 0) {
         throw 'Tailscale could not publish the Codex listener. If a browser approval page opened, approve HTTPS and run setup again.'
     }
     if ($EnableHermes) {
+        $hermesArgs = @{ HostRoot = $HostRoot; SkipBuild = $SkipBuild }
+        & (Join-Path $PSScriptRoot 'install-hermes-bridge.ps1') @hermesArgs
         & $tailscale.Source serve --bg --https=4510 http://127.0.0.1:4510
         if ($LASTEXITCODE -ne 0) { throw 'Tailscale could not publish the optional Hermes listener.' }
     }
