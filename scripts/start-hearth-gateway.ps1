@@ -62,10 +62,12 @@ try {
         -RedirectStandardOutput $stdoutPath `
         -RedirectStandardError $stderrPath `
         -PassThru
-    # Keep the gateway process independent from this short-lived launcher.
-    # Otherwise Windows Terminal retains a visible PowerShell console for the
-    # full lifetime of the gateway after every logon.
-    exit 0
+    # Keep the scheduled task alive for the lifetime of Node. This lets Task
+    # Scheduler observe a crash and apply its configured restart policy instead
+    # of recording a successful launch while the real service is unsupervised.
+    $process.WaitForExit()
+    $gatewayExitCode = $process.ExitCode
 } finally {
     Remove-Item Env:\HEARTH_GATEWAY_PORT,Env:\HEARTH_GATEWAY_AUTH_ROOT,Env:\HEARTH_GATEWAY_STATIC_ROOT,Env:\HEARTH_GATEWAY_TOKEN_PATH,Env:\HEARTH_GATEWAY_PUBLIC_ORIGIN,Env:\HEARTH_GATEWAY_DEFAULT_CWD,Env:\HEARTH_GATEWAY_HANDOFF_PATH,Env:\HEARTH_GATEWAY_HOST_NAME,Env:\HEARTH_GATEWAY_HERMES_ENABLED -ErrorAction SilentlyContinue
 }
+exit $gatewayExitCode

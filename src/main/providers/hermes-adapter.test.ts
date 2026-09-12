@@ -53,7 +53,17 @@ describe("HermesAdapter", () => {
     } as unknown as ConfigStore;
 
     const adapter = new HermesAdapter(config);
+    let snapshotEmissions = 0;
+    adapter.onSnapshot(() => { snapshotEmissions += 1; });
     await adapter.connect();
+
+    const emissionsBeforeGlobalEvent = snapshotEmissions;
+    for (const socket of server.clients) {
+      socket.send(JSON.stringify({ method: "event", params: { type: "sessions.changed", session_id: "", payload: {} } }));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(snapshotEmissions).toBe(emissionsBeforeGlobalEvent);
+
     expect(adapter.snapshot().sessions[0]).toMatchObject({
       id: "qwen::stored-1", profile: "qwen", title: "Saved title", cwd: "C:\\saved",
     });

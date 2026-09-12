@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Prevented the phone gateway from exhausting the Node.js heap when a slow or stale client cannot consume repeated application snapshots.
+- Stopped high-volume global Hermes notifications such as `sessions.changed` from triggering duplicate full-snapshot broadcasts.
+- Added a bounded WebSocket backlog so unhealthy browser connections are closed instead of retaining data indefinitely.
+- Kept the hidden gateway launcher attached to its Node.js child and propagated failures so Windows Task Scheduler can restart a crashed gateway.
+- Added regression coverage for non-mutating Hermes gateway events.
+
 ## 0.3.0-alpha.3
 
 - Added an authenticated loopback compatibility bridge for current Hermes host validation.

@@ -6,6 +6,8 @@ A calm, private Windows and phone client for Codex tasks that live on another Wi
 
 > **Windows warning:** Alpha installers are not code-signed yet, so Windows SmartScreen may show an unknown-publisher warning. Verify the release checksum before running a downloaded build.
 
+See the [changelog](CHANGELOG.md) for release history and unreleased reliability fixes.
+
 ## What it does
 
 Hearth Remote lets one Windows computer remain the canonical home for Codex, its task history, and project files. A second Windows computer or phone can open those same tasks without copying `.codex` state between machines.

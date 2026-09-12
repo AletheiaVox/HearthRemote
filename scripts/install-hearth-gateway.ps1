@@ -27,7 +27,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Windows could not restrict the Hearth Gateway 
 if ([string]::IsNullOrWhiteSpace($DnsName)) { throw 'A Tailscale DNS name is required to install the phone gateway.' }
 $publicOrigin = 'https://{0}:4520' -f $DnsName.TrimEnd('.')
 $hermesSwitch = if ($EnableHermes) { ' -EnableHermes' } else { '' }
-$arguments = '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -ProjectRoot "{1}" -NodePath "{2}" -HostRoot "{3}" -PublicOrigin "{4}" -DefaultCwd "{5}" -HostName "{6}"{7}' -f $startScript, $projectRoot, $nodePath, $HostRoot, $publicOrigin, $DefaultCwd, [Environment]::MachineName, $hermesSwitch
+$arguments = '-NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -ProjectRoot "{1}" -NodePath "{2}" -HostRoot "{3}" -PublicOrigin "{4}" -DefaultCwd "{5}" -HostName "{6}"{7}' -f $startScript, $projectRoot, $nodePath, $HostRoot, $publicOrigin, $DefaultCwd, [Environment]::MachineName, $hermesSwitch
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arguments
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)

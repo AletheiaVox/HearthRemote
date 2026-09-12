@@ -491,6 +491,7 @@ export class HermesAdapter implements AssistantAdapter {
     if (event.profile && event.profile !== this.activeProfile) return;
     const payload = event.payload ?? {};
     const text = textValue(payload.text ?? payload.rendered ?? payload.content ?? payload.message ?? payload.error ?? payload.detail);
+    let snapshotChanged = true;
     switch (event.type) {
       case "message.start": this.busy = true; this.fallbackReasoningId = undefined; break;
       case "message.delta": this.appendStreaming("assistant", text); break;
@@ -514,8 +515,15 @@ export class HermesAdapter implements AssistantAdapter {
         this.busy = false;
         this.timeline.push({ id: crypto.randomUUID(), kind: "system", text: text || "Hermes reported an error." });
         break;
+      default:
+        // The multiplexed gateway also emits high-volume global events such as
+        // sessions.changed and platforms.changed. They do not mutate this
+        // adapter's visible state, so broadcasting a full snapshot for each one
+        // only creates duplicate traffic (and can overwhelm a slow phone).
+        snapshotChanged = false;
+        break;
     }
-    this.emit();
+    if (snapshotChanged) this.emit();
   }
 
   private appendStreaming(kind: "assistant" | "reasoning", delta: string): void {

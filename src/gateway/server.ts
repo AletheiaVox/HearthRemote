@@ -21,6 +21,7 @@ const authRoot = process.env.HEARTH_GATEWAY_AUTH_ROOT
 const publicOrigin = process.env.HEARTH_GATEWAY_PUBLIC_ORIGIN?.replace(/\/$/, "");
 const sessionCookie = "hearth_session";
 const disconnectGraceMs = 90_000;
+const maxSocketBacklogBytes = 4 * 1024 * 1024;
 
 const config = new GatewayConfig();
 const service = new ProviderService(config);
@@ -185,7 +186,20 @@ function broadcast(frame: unknown): void {
 }
 
 function send(socket: WebSocket, frame: unknown): void {
-  if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(frame));
+  if (socket.readyState !== WebSocket.OPEN) return;
+  const payload = JSON.stringify(frame);
+  const payloadBytes = Buffer.byteLength(payload);
+  if (socket.bufferedAmount + payloadBytes > maxSocketBacklogBytes) {
+    // A stale Tailscale/browser connection must not be allowed to retain an
+    // unbounded queue of full application snapshots in the gateway heap.
+    sockets.delete(socket);
+    socket.terminate();
+    if (sockets.size === 0) scheduleIdleDisconnect();
+    return;
+  }
+  socket.send(payload, (error) => {
+    if (error) socket.terminate();
+  });
 }
 
 function scheduleIdleDisconnect(): void {
