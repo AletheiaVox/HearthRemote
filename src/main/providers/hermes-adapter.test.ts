@@ -9,6 +9,7 @@ describe("HermesAdapter", () => {
   let httpServer: Server | undefined;
 
   afterEach(async () => {
+    for (const client of server?.clients ?? []) client.terminate();
     await new Promise<void>((resolve) => server?.close(() => resolve()) ?? resolve());
     await new Promise<void>((resolve) => httpServer?.close(() => resolve()) ?? resolve());
   });
@@ -21,6 +22,9 @@ describe("HermesAdapter", () => {
       if (request.url?.startsWith("/api/profiles/sessions?")) response.end(JSON.stringify({ sessions: [
         { id: "stored-1", profile: "qwen", title: "Saved title", preview: "Saved preview", cwd: "C:\\saved", started_at: 1, last_active: 2, message_count: 2 },
         { id: "stored-2", profile: "resident", title: null, preview: "@folder:C:\\Users\\me\\Project  Recognizable first message", cwd: "C:\\Project", started_at: 1, last_active: 1, message_count: 1 },
+      ] }));
+      else if (request.url === "/api/sessions/bot-resident-tip/messages?profile=resident") response.end(JSON.stringify({ session_id: "bot-resident-tip", messages: [
+        { role: "assistant", content: "persistent hello" },
       ] }));
       else if (request.url === "/api/sessions/stored-1/messages?profile=qwen") response.end(JSON.stringify({ session_id: "stored-1", messages: [
         { role: "user", content: "saved question" }, { role: "assistant", content: "saved answer" },
@@ -64,15 +68,23 @@ describe("HermesAdapter", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(snapshotEmissions).toBe(emissionsBeforeGlobalEvent);
 
-    expect(adapter.snapshot().sessions[0]).toMatchObject({
+    expect(adapter.snapshot().sessions.slice(0, 2)).toEqual([
+      expect.objectContaining({ id: "default::bot-default", profile: "default", title: "Bot Chat" }),
+      expect.objectContaining({ id: "resident::bot-resident-tip", profile: "resident", title: "Bot Chat" }),
+    ]);
+    expect(adapter.snapshot().sessions.find((session) => session.id === "qwen::stored-1")).toMatchObject({
       id: "qwen::stored-1", profile: "qwen", title: "Saved title", cwd: "C:\\saved",
     });
-    expect(adapter.snapshot().sessions[1]).toMatchObject({ id: "resident::stored-2", profile: "resident" });
-    expect(adapter.snapshot().sessions[1]?.title).toBe("Recognizable first message");
+    expect(adapter.snapshot().sessions.find((session) => session.id === "resident::stored-2")).toMatchObject({
+      id: "resident::stored-2", profile: "resident", title: "Recognizable first message",
+    });
     expect(adapter.snapshot().models).toEqual([
       { provider: "lmstudio", model: "local-model", label: "LM Studio · local-model" },
     ]);
     expect(restHosts.every((host) => host === `127.0.0.1:${address.port}`)).toBe(true);
+
+    await adapter.openSession("resident::bot-resident-tip");
+    expect(adapter.snapshot().timeline).toContainEqual(expect.objectContaining({ kind: "assistant", text: "persistent hello" }));
 
     await adapter.openSession("qwen::stored-1");
     expect(adapter.snapshot().timeline).toEqual(expect.arrayContaining([
@@ -93,7 +105,12 @@ describe("HermesAdapter", () => {
     expect(snapshot.timeline.some((item) => item.kind === "reasoning" && item.text === "hello from Hermes")).toBe(false);
     expect(calls.some((call) => call.method === "file.attach")).toBe(true);
     expect(calls.find((call) => call.method === "prompt.submit")?.params.text).toContain("@file:note.txt");
-    expect(calls.find((call) => call.method === "session.resume")?.params).toMatchObject({ profile: "qwen", session_id: "stored-1" });
+    expect(calls.find((call) => call.method === "session.resume" && call.params.session_id === "stored-1")?.params).toMatchObject({ profile: "qwen", session_id: "stored-1" });
+    expect(calls.filter((call) => call.method === "session.list")).toEqual(expect.arrayContaining([
+      expect.objectContaining({ params: { profile: "default", title: "Bot Chat", include_hidden: true } }),
+      expect.objectContaining({ params: { profile: "resident", title: "Bot Chat", include_hidden: true } }),
+      expect.objectContaining({ params: { profile: "local", title: "Bot Chat", include_hidden: true } }),
+    ]));
     expect(calls.find((call) => call.method === "session.resume")?.params).not.toHaveProperty("close_on_disconnect");
     expect(calls.find((call) => call.method === "session.create")?.params).toMatchObject({ profile: "resident", cwd: "C:\\project" });
     expect(calls.find((call) => call.method === "session.create")?.params).not.toHaveProperty("close_on_disconnect");
@@ -134,6 +151,16 @@ function wireGateway(socket: WebSocket, calls: Array<{ method: string; params: R
     if (frame.method === "profiles.list") respond({ profiles: [
       { name: "default", is_default: true }, { name: "resident", model: "local-model", provider: "lmstudio" }, { name: "local", model: "local-model", provider: "lmstudio" },
     ] });
+    else if (frame.method === "session.list") {
+      const profile = String(frame.params.profile);
+      if (profile === "default") respond({ sessions: [
+        { id: "bot-default", title: "Bot Chat", preview: "", started_at: 3, message_count: 0, source: "desktop" },
+      ] });
+      else if (profile === "resident") respond({ sessions: [
+        { id: "bot-resident-root", resolved_id: "bot-resident-tip", title: "Bot Chat", preview: "Always here", started_at: 4, message_count: 8, source: "desktop" },
+      ] });
+      else respond({ sessions: [] });
+    }
     else if (frame.method === "model.options") respond({ model: "local-model", provider: "lmstudio", providers: [] });
     else if (frame.method === "session.resume") {
       const storedId = String(frame.params.session_id);

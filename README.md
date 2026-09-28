@@ -20,7 +20,7 @@ Hearth Remote lets one Windows computer remain the canonical home for Codex, its
 - Transfer task ownership safely between the host Codex app and Hearth Remote.
 - Keep remote access available through a hidden supervised listener; the Codex desktop app does not need to be running.
 - Use an installable phone PWA with one-time pairing and revocable device sessions.
-- Optionally expose Hermes profiles, conversations, and model selection through the same interface.
+- Optionally expose Hermes profiles, persistent canonical Bot Chats, ordinary conversations, and model selection through the same interface.
 
 Hermes support is optional and expects Hermes Desktop to be installed and configured already. When enabled, host setup installs a supervised, authenticated loopback bridge on port 4510 and keeps the Hermes backend private on port 4511. Hearth Remote does not install Hermes or change its profiles and models.
 

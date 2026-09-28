@@ -65,6 +65,16 @@ try {
   const profiles = (profileResult.profiles || []).map((profile) => profile.name);
   if (profiles.length < 2) throw new Error(`Unified listener exposed only ${profiles.length} profile.`);
 
+  const botChatResults = await Promise.all(profiles.map((profile) => request("session.list", {
+    profile, title: "Bot Chat", include_hidden: true,
+  })));
+  const botChats = botChatResults.flatMap((result, index) => (result.sessions || []).map((session) => ({
+    ...session, profile: profiles[index],
+  })));
+  if (botChats.some((session) => session.title !== "Bot Chat" || !session.id || !session.profile)) {
+    throw new Error("Hermes returned an invalid canonical Bot Chat row.");
+  }
+
   const sessionResult = await rest("/api/profiles/sessions?limit=100&offset=0&min_messages=1&archived=exclude&order=recent&profile=all");
   const sessions = sessionResult.sessions || sessionResult.data || [];
   if (!sessions.every((session) => typeof session.profile === "string" && session.profile.length > 0)) {
@@ -88,6 +98,7 @@ try {
   }
 
   console.log(`Hermes unified-profile probe passed: ${profiles.length} profiles, ${sessions.length} conversations, ${profilesWithSessions.length} profiles with transcript samples.`);
+  console.log(`Canonical Bot Chats visible through the supported hidden-session lookup: ${botChats.length}.`);
   console.log(`Profiles: ${profiles.join(", ")}`);
 } finally {
   socket.terminate();

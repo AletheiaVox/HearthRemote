@@ -27,6 +27,8 @@ When Hermes is enabled, Tailscale and the clients still use port 4510. A Hearth-
 
 `ProviderService` owns an `AssistantAdapter`. Codex and Hermes implement the same snapshot/action contract, while provider descriptors declare capabilities. Hermes is optional and unavailable unless enabled during host setup. This keeps future local harnesses from leaking transport details into the renderer.
 
+Hermes conversation discovery combines its ordinary multi-profile recents endpoint with an exact-title `session.list` lookup for each profile's canonical hidden `Bot Chat`. Only that supported identity is added; other hidden sessions remain excluded. Compression tips are opened through Hermes's returned `resolved_id` when present.
+
 ## Codex task ownership
 
 Codex rejects a second active writer. Hearth Remote inspects host ownership, requests a normal desktop close, offers a separately confirmed targeted force-close if necessary, resumes only the selected task, unsubscribes loaded tasks when returning control, and recycles only the dedicated listener when needed to clear stale writer state.

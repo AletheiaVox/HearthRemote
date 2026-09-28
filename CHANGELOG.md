@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.3.0-alpha.4
 
+- Added each Hermes profile's canonical hidden `Bot Chat` to Local AI, pinned above ordinary conversations and opened through Hermes's supported persistent-session path.
 - Prevented the phone gateway from exhausting the Node.js heap when a slow or stale client cannot consume repeated application snapshots.
 - Stopped high-volume global Hermes notifications such as `sessions.changed` from triggering duplicate full-snapshot broadcasts.
 - Added a bounded WebSocket backlog so unhealthy browser connections are closed instead of retaining data indefinitely.

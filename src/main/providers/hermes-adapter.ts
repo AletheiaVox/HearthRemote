@@ -20,6 +20,7 @@ import { JsonRpcWebSocket, type RpcNotification } from "./json-rpc-ws";
 interface HermesEvent { type?: string; session_id?: string; profile?: string; payload?: Record<string, unknown> }
 interface HermesSessionRow {
   id: string;
+  resolved_id?: string;
   profile?: string;
   title?: string | null;
   preview?: string | null;
@@ -32,6 +33,7 @@ interface HermesSessionRow {
 }
 interface HermesMessage { role?: string; content?: unknown; text?: unknown; name?: string; tool_name?: string; timestamp?: number }
 interface HermesSessionsResponse { sessions?: HermesSessionRow[]; data?: HermesSessionRow[] }
+interface HermesSessionListResponse { sessions?: HermesSessionRow[] }
 interface HermesProfilesResponse {
   profiles?: Array<{ name: string; is_default?: boolean; model?: string; provider?: string; description?: string }>;
 }
@@ -56,6 +58,8 @@ const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 30 * 1024 * 1024;
 const PROFILE_SEPARATOR = "::";
 const SYNC_INTERVAL_MS = 3_000;
+const BOT_CHAT_CACHE_MS = 30_000;
+const BOT_CHAT_TITLE = "Bot Chat";
 const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 30_000] as const;
 
 export class HermesAdapter implements AssistantAdapter {
@@ -89,6 +93,8 @@ export class HermesAdapter implements AssistantAdapter {
   private syncTimer?: ReturnType<typeof setInterval>;
   private syncing = false;
   private syncTick = 0;
+  private canonicalBotChats: HermesSessionRow[] = [];
+  private canonicalBotChatsRefreshedAt = 0;
 
   constructor(private readonly config: AssistantConfig) {
     this.rpc.onNotification((message) => this.handleNotification(message));
@@ -202,14 +208,24 @@ export class HermesAdapter implements AssistantAdapter {
 
   async refreshSessions(search = ""): Promise<void> {
     this.requireConnection();
-    const result = await this.rest<HermesSessionsResponse>("/api/profiles/sessions?limit=100&offset=0&min_messages=1&archived=exclude&order=recent&profile=all");
+    const [result, botChats] = await Promise.all([
+      this.rest<HermesSessionsResponse>("/api/profiles/sessions?limit=100&offset=0&min_messages=1&archived=exclude&order=recent&profile=all"),
+      this.listCanonicalBotChats(),
+    ]);
     const needle = search.trim().toLowerCase();
-    const rows = (result.sessions ?? result.data ?? [])
+    const seen = new Set<string>();
+    const rows = [...botChats, ...(result.sessions ?? result.data ?? [])]
+      .filter((row) => {
+        const key = sessionKey(row.profile || "default", row.resolved_id || row.id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .filter((row) => !needle || `${row.profile ?? ""} ${row.title ?? ""} ${row.preview ?? ""} ${row.cwd ?? ""}`.toLowerCase().includes(needle))
       .map((row) => {
         const profile = row.profile || "default";
         return {
-          id: sessionKey(profile, row.id),
+          id: sessionKey(profile, row.resolved_id || row.id),
           profile,
           title: sessionTitle(row),
           preview: row.preview ?? "",
@@ -363,16 +379,41 @@ export class HermesAdapter implements AssistantAdapter {
 
   private async refreshProfiles(): Promise<void> {
     const result = await this.rpc.request<HermesProfilesResponse>("profiles.list", { include_sessions: false }, 120_000);
+    const previousProfiles = this.hermesProfiles.map((profile) => profile.id).join("\0");
     this.hermesProfiles = (result.profiles ?? []).map((profile) => ({
       id: profile.name,
       label: profile.name,
       model: profile.model,
       provider: profile.provider,
     }));
+    if (this.hermesProfiles.map((profile) => profile.id).join("\0") !== previousProfiles) {
+      this.canonicalBotChatsRefreshedAt = 0;
+    }
     const preferred = this.hermesProfiles.find((profile) => profile.id === this.activeProfile)
       ?? this.hermesProfiles.find((profile) => profile.id === "qwen")
       ?? this.hermesProfiles[0];
     if (preferred) this.activeProfile = preferred.id;
+  }
+
+  private async listCanonicalBotChats(): Promise<HermesSessionRow[]> {
+    if (Date.now() - this.canonicalBotChatsRefreshedAt < BOT_CHAT_CACHE_MS) return this.canonicalBotChats;
+    const cachedByProfile = new Map(this.canonicalBotChats.map((row) => [row.profile || "default", row]));
+    const rows = (await Promise.all(this.hermesProfiles.map(async (profile) => {
+      try {
+        const result = await this.rpc.request<HermesSessionListResponse>("session.list", {
+          profile: profile.id,
+          title: BOT_CHAT_TITLE,
+          include_hidden: true,
+        }, 120_000);
+        return (result.sessions ?? []).map((row) => ({ ...row, profile: profile.id }));
+      } catch {
+        const cached = cachedByProfile.get(profile.id);
+        return cached ? [cached] : [];
+      }
+    }))).flat();
+    this.canonicalBotChats = rows;
+    this.canonicalBotChatsRefreshedAt = Date.now();
+    return rows;
   }
 
   private async refreshModels(profile = this.activeProfile): Promise<void> {
